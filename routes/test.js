@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const mongoose = require('../db/models/test.model'); // needs to be changed for deployment
+const mongoose = require('../db-connector');
 
 router.get('/', (req, res) => {
   res.json({ 
@@ -13,34 +13,40 @@ router.get('/', (req, res) => {
 
 router.get('/db', async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'Database not connected',
-        readyState: mongoose.connection.readyState // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+    const state = mongoose.connection.readyState;
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    
+    if (state !== 1) {
+      return res.status(500).json({ 
+        error: `DB not connected. State: ${states[state]}` 
       });
     }
 
-    const collections = await mongoose.connection.db.listCollections().toArray();
+    const usersCollection = mongoose.connection.collection('users');
+    const alice = await usersCollection.findOne({ name: 'Alice' });
     
-    res.json({
-      status: 'success',
-      message: 'Database connection working!',
-      timestamp: new Date().toISOString(),
-      connected: true,
-      readyState: mongoose.connection.readyState,
-      dbName: mongoose.connection.name,
-      host: mongoose.connection.host,
-      collections: collections.map(c => c.name),
-      collectionsCount: collections.length
-    });
+    if (alice) {
+      res.json({ 
+        success: true, 
+        connected: true,
+        message: 'Successfully read Alice from users collection!',
+        alice: alice 
+      });
+    } else {
+      const users = await usersCollection.find({}).limit(5).toArray();
+      res.json({ 
+        success: true, 
+        connected: true,
+        message: 'DB connected, users collection accessible',
+        userCount: users.length,
+        sampleUsers: users 
+      });
+    }
     
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Database test failed',
-      error: error.message,
-      timestamp: new Date().toISOString()
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
     });
   }
 });
