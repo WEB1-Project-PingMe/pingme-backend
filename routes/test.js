@@ -13,6 +13,7 @@ router.get('/', (req, res) => {
 
 router.get('/db', async (req, res) => {
   try {
+    /*
     const state = mongoose.connection.readyState;
     const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
     
@@ -21,6 +22,7 @@ router.get('/db', async (req, res) => {
         error: `DB not connected. State: ${states[state]}` 
       });
     }
+      */
 
     const usersCollection = mongoose.connection.collection('users');
     const alice = await usersCollection.findOne({ name: 'Alice' });
