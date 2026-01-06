@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const mongoose = require('../db-connector');
+const mongoose = require('../db/db-connector');
 
 router.get('/', (req, res) => {
   res.json({ 
