@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const uri = process.env.MONGODB_URI;
 
-mongoose.connect('mongodb+srv://pingme_db_user:pO5bK18DYFvGzfco@cluster-web1-pingme.jlvqo7o.mongodb.net/pingme?retryWrites=true&w=majority');
+mongoose.connect(uri);
 console.log("Connected to db");
 
 
