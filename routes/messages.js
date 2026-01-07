@@ -1,9 +1,9 @@
-const express = require('express');
-const Message = require('../db/models/messages.model'); // needs to be changed for deployment
+const express = require("express");
+const Message = require("../db/models/messages.model"); // needs to be changed for deployment
 const router = express.Router();
 
 // POST /message - create new message
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const message = await Message.create({
         messageContent: req.body.messageContent,
@@ -13,14 +13,14 @@ router.post('/', async (req, res) => {
     res.status(201).json(message);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'Error' });
+      return res.status(400).json({ error: "Error" });
     }
     res.status(500).json({ error: error.message });
   }
 });
 
 // GET /message - Fetch all messages !!! for now
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const messages = await Message.find({}).sort({ createdAt: -1 });
     res.status(200).json(messages);
@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:userID', async (req, res) => {
+router.get("/:userID", async (req, res) => {
   try {
     const { userID } = req.params;
     const messages = await Message.find({

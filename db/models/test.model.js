@@ -1,4 +1,4 @@
-const mongoose = require('../db-connector');
+const mongoose = require("../db-connector");
 
 const testSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -6,4 +6,4 @@ const testSchema = new mongoose.Schema({
   message: String
 });
 
-module.exports = mongoose.model('Test', testSchema);
+module.exports = mongoose.model("Test", testSchema);
