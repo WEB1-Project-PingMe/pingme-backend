@@ -1,37 +1,76 @@
 const express = require('express');
-const path = require("path");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../db/models/users.model');
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
   try {
-    const message = await User.create({
-        name: req.body.name,
-        password: req.body.password,
-        email: req.body.email
+    const { name, email, password } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword
     });
-    res.status(201).json(message);
+
+    const { password: _, ...userResponse } = user.toObject();
+    
+    res.status(201).json({ 
+      message: 'User created successfully',
+      user: userResponse 
+    });
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'Error' });
+      return res.status(400).json({ error: 'Email already exists' });
     }
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'fallback-secret-key-change-in-production',
+      { expiresIn: '7d' }
+    );
+
+    const { password: _, ...userResponse } = user.toObject();
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: userResponse
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
 module.exports = router;
-
-/*
-    // Create user
-    const newUser = await UserService.createUser({
-      name: 'John Doe',
-      email: 'john@example.com',
-      age: 30,
-    });
-    console.log('User created:', newUser);
-
-    // Get all users
-    const users = await UserService.getAllUsers();
-    console.log('All users:', users);
-*/
-
