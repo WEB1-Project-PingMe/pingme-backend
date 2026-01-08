@@ -10,19 +10,19 @@ const router = express.Router();
 // DELETE /conversations/messages delete message
 
 // POST /conversations - Create new conversation
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { participantIds } = req.body;
 
     if (!participantIds || !Array.isArray(participantIds) || participantIds.length < 2) {
-      return res.status(400).json({ error: 'participantIds array with 2+ users required' });
+      return res.status(400).json({ error: "participantIds array with 2+ users required" });
     }
 
     const conversation = await Conversation.create({
       participantIds,
     });
 
-    await conversation.populate('participantIds', 'name');
+    await conversation.populate("participantIds", "name");
 
     return res.status(201).json({ 
       conversationId: conversation._id,
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ error: "Internal error" });
   }
 });
 
