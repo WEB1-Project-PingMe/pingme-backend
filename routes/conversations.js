@@ -34,6 +34,48 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const conversations = await Conversation
+      .find({ participantIds: userId })
+      .populate("participantIds", "name email")
+      .sort({ lastMessageAt: -1 })
+      .lean();
+
+    // Transform data to group participants and identify other participant
+    const formattedConversations = conversations.map(conv => {
+      const otherParticipants = conv.participantIds.filter(p => 
+        p._id.toString() !== userId
+      );
+
+      return {
+        _id: conv._id,
+        type: conv.type,
+        participants: otherParticipants,
+        lastMessageAt: conv.lastMessageAt,
+        lastMessageText: conv.lastMessageText,
+        updatedAt: conv.updatedAt,
+        createdAt: conv.createdAt
+      };
+    });
+
+    res.json({
+      success: true,
+      conversations: formattedConversations
+    });
+
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch conversations",
+      error: error.message
+    });
+  }
+});
+
 // GET /conversations/messages?conversationId=...&before=ISO&limit=20
 router.get("/messages", async (req, res) => {
   try {
