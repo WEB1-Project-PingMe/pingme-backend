@@ -4,11 +4,35 @@ const Message = require("../db/models/messages.model");
 const router = express.Router();
 
 // GET /conversations list all chats of a user
-// POST /conversations create a new chat
 // DELETE /conversations user leaves a chat
 // GET /conversations/messages get messages from a chat
 // POST /conversations/messages send message to a chat
 // DELETE /conversations/messages delete message
+
+// POST /conversations - Create new conversation
+router.post('/', async (req, res) => {
+  try {
+    const { participantIds } = req.body;
+
+    if (!participantIds || !Array.isArray(participantIds) || participantIds.length < 2) {
+      return res.status(400).json({ error: 'participantIds array with 2+ users required' });
+    }
+
+    const conversation = await Conversation.create({
+      participantIds,
+    });
+
+    await conversation.populate('participantIds', 'name');
+
+    return res.status(201).json({ 
+      conversationId: conversation._id,
+      conversation 
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
 
 // GET /conversations/messages?conversationId=...&before=ISO&limit=20
 router.get("/messages", async (req, res) => {
