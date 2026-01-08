@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../db/models/users.model");
+const verifyToken = require('../middleware/verifyToken');
 const router = express.Router();
 
 // Create User
@@ -79,7 +80,7 @@ router.post("/login", async (req, res) => {
 
 
 // Delete User
-router.delete("/account", async (req, res) => {
+router.delete("/account", verifyToken , async (req, res) => {
   try {
     const sessionToken = req.headers.authorization?.replace("Bearer ", "") || req.body.sessionToken;
     
