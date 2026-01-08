@@ -5,7 +5,7 @@ const mongoose = require("../db/db-connector");
 
 router.get("/", (req, res) => {
   res.json({ 
-    message: "Test API working!", 
+    message: "Test API working! currentUserID" + req.user, 
     timestamp: new Date().toISOString(),
     status: "success"
   });
