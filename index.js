@@ -9,7 +9,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/test", verifyToken, require("./routes/test"));
-app.use("/auth", verifyToken, require("./routes/auth"));
+
+
+app.use("/auth", require("./routes/auth"));
 app.use("/users", verifyToken, require("./routes/users"));
 //app.use("/contacts", verifyToken, require("./routes/contacts"));
 //app.use("/blocks", verifyToken, require("./routes/blocks"));
