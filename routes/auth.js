@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../db/models/users.model");
 const router = express.Router();
 
+// Create User
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -35,6 +36,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Login User Create sessionToken
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -73,6 +75,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Logout User Delete sessionToken
+
+
+// Delete User
 router.delete("/account", async (req, res) => {
   try {
     const sessionToken = req.headers.authorization?.replace("Bearer ", "") || req.body.sessionToken;

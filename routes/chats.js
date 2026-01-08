@@ -1,8 +1,9 @@
 const express = require("express");
-const Message = require("../db/models/messages.model");
+const Chat = require("../db/models/chats.model");
 const router = express.Router();
 
-// POST /message - create new message
+
+// POST   /chats create new chat
 router.post("/", async (req, res) => {
   try {
     const message = await Message.create({
@@ -19,7 +20,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// GET /message - Fetch all messages !!! for now
+// GET    /chats list all chats
 router.get("/", async (req, res) => {
   try {
     const messages = await Message.find({}).sort({ createdAt: -1 });
@@ -29,19 +30,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:userID", async (req, res) => {
-  try {
-    const { userID } = req.params;
-    const messages = await Message.find({
-      $or: [
-        { senderID: userID },
-        { recipientID: userID }
-      ]
-    }).sort({ createdAt: 1 }); // 1 = oldest first
-    res.status(200).json(messages);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// DELETE /chats leave a chat
+
 
 module.exports = router;

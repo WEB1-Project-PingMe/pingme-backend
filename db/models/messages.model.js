@@ -1,25 +1,26 @@
-const mongoose = require("../db-connector");
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const messageSchema = new mongoose.Schema(
+const messageSchema = new Schema(
   {
-    messageContent: { type: String, required: true },
-    senderID: { type: String, required: true},
-    recipientID: { type: String, required: true},
-    chatID: { type: String, required: true}
+    conversationId: { type: Schema.Types.ObjectId, ref: "Conversation", index: true },
+    groupId: { type: Schema.Types.ObjectId, ref: "Group", index: true },
+    senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    text: { type: String, required: true },
+    attachments: [
+      {
+        url: String,
+        type: String,
+      },
+    ],
+    deletedAt: { type: Date, default: null },
+    editedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" } }
 );
 
-const decryptedMessageSchema = new mongoose.Schema(
-  {
-    ciphertext: { type: Buffer, required: true },  // Base64-decoded encrypted message
-    iv: { type: Buffer, required: true },          // 12-byte initialization vector
-    ephemPublicKey: { type: Buffer },             // Optional ephemeral key for forward secrecy
-    senderID: { type: String, required: true },
-    recipientID: { type: String, required: true },
-    chatID: { type: String, required: true }       // Uncomment for group/1:1 chat routing
-  },
-  { timestamps: true }
-);
+// Compound indexes for pagination
+messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({ groupId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Message", messageSchema);

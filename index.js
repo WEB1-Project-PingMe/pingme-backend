@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/test", require("./routes/test"));
 app.use("/auth", require("./routes/auth"));
-//app.use("/users", require("./routes/users"));
+app.use("/users", require("./routes/users"));
 //app.use("/contacts", require("./routes/contacts"));
 //app.use("/blocks", require("./routes/blocks"));
 app.use("/messages", require("./routes/messages")); // testing
