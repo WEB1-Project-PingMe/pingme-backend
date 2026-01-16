@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/test", verifyToken, require("./routes/test"));
+app.use("/test", require("./routes/test"));
 
 
 app.use("/auth", require("./routes/auth"));
