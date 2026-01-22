@@ -339,8 +339,6 @@ router.delete("/:groupID/messages/:messageID", async (req, res) => {
   }
 });
 
-const Announcement = require("./models/Announcement");
-
 // POST /groups/:groupID/announcements
 // Body: { creatorId, title, text }
 router.post("/:groupID/announcements", async (req, res) => {
