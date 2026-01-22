@@ -1,3 +1,3 @@
 # pingme-backend
 
-## [API Documentation](./docs/pingme-api.md)
+## [API Documentation](./docs/api/pingme-api.md)
