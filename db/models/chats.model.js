@@ -1,6 +1,7 @@
 const mongoose = require("../db-connector");
+const { Schema } = mongoose;
 
-const chatSchema = new mongoose.Schema(
+const chatSchema = new Schema(
   {
     messageContent: { type: String, required: true },
     senderID: { type: String, required: true},

@@ -1,6 +1,7 @@
 const mongoose = require("../db-connector");
+const { Schema } = mongoose;
 
-const announcementSchema = new mongoose.Schema(
+const announcementSchema = new Schema(
   {
     groupId: { type: Schema.Types.ObjectId, ref: "Group", index: true },
     creatorId: { type: Schema.Types.ObjectId, ref: "User", index: true },
