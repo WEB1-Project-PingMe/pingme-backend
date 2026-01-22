@@ -36,6 +36,7 @@ async function apiCall(url, options = {}) {
 - [/contacts](./contacts.md)
 - [/conversations](./conversations.md)
 - [/groups](./groups.md)
+- [/test](./test.md)
 - [/users](./users.md)
 
 

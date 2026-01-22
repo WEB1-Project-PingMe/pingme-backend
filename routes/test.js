@@ -5,14 +5,14 @@ const mongoose = require("../db/db-connector");
 
 router.get("/", (req, res) => {
   res.json({ 
-    message: "Test API working! currentUserID", 
+    message: "Test API working!", 
     currentUser: req.user,
     timestamp: new Date().toISOString(),
     status: "success"
   });
 });
 
-router.get("/db", async (req, res) => {
+router.get("/db", verifyToken, async (req, res) => {
   try {
     /*
     const state = mongoose.connection.readyState;
