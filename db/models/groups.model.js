@@ -17,12 +17,11 @@ groupSchema.index({ memberIds: 1, lastMessageAt: -1 });
 groupSchema.index({ "adminIds": 1 });
 groupSchema.index({ isPrivate: 1, isActive: 1 });
 
-// Validate at least one admin
-groupSchema.pre('save', function(next) {
-  if (this.adminIds && this.adminIds.length === 0) {
-    return next(new Error('Group must have at least one admin'));
+groupSchema.pre('save', async function() {
+  if (!this.adminIds || this.adminIds.length === 0) {
+    const error = new Error('Group must have at least one admin');
+    throw error;
   }
-  next();
 });
 
 module.exports = mongoose.model("Group", groupSchema);
