@@ -2,12 +2,11 @@ const express = require("express");
 const router = express.Router();
 const Block = require("../models/Block");
 
-// Annahme: req.user.id kommt z.B. aus Auth-Middleware
 // POST /blocks – block user
 router.post("/", async (req, res) => {
   try {
     const { blockedUserId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     if (!blockedUserId) {
       return res.status(400).json({ message: "blockedUserId ist required" });

@@ -53,20 +53,41 @@ Request:
 ``` json
 Body:
 { 
-	"participantIds": ["507f1f77bcf86cd799439011", "507f191e810c19729de860ea"] 
+    "participantId": "507f191e810c19729de860ea" 
 }
+
 ```
 Response:
 ```json
 Status: 201 SUCCESS
 {
-	"message": "Conversation created successfully",
-	"conversationId": "507f1f77bcf86cd799439012"
+    "conversationId": "507f1f77bcf86cd799439012",
+    "conversation": {
+        "_id": "507f1f77bcf86cd799439012",
+        "participantIds": [
+            {
+                "_id": "507f1f77bcf86cd799439011",
+                "name": "Current User"
+            },
+            {
+                "_id": "507f191e810c19729de860ea", 
+                "name": "Other User"
+            }
+        ]
+    }
 }
 Status: 400 BAD REQUEST
 {
-	"error": "participantIds array with 2 users required"
+    "error": "participantId required"
 }
+Status: 403 FORBIDDEN
+{
+    "error": "Cannot create conversation: User 507f191e810c19729de860ea has blocked you"
+}
+{
+    "error": "Cannot create conversation: You have blocked user 507f191e810c19729de860ea"
+}
+
 ```
 ## DELETE /conversations - nicht implementiert
 ```

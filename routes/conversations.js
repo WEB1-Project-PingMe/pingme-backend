@@ -12,10 +12,37 @@ const router = express.Router();
 // POST /conversations - Create new conversation
 router.post("/", async (req, res) => {
   try {
-    const { participantIds } = req.body;
+    const userId = req.user.userId;
+    const { participantId } = req.body;
 
-    if (!participantIds || !Array.isArray(participantIds) || participantIds.length < 2) {
-      return res.status(400).json({ error: "participantIds array with 2+ users required" });
+    if (!participantId) {
+      return res.status(400).json({ error: "participantId required" });
+    }
+
+    const participantIds = [userId, participantId];
+
+    // Check if participant blocked current user
+    const isBlockedByParticipant = await Block.findOne({
+      userId: participantId,   
+      blockedUserId: userId     
+    });
+
+    if (isBlockedByParticipant) {
+      return res.status(403).json({ 
+        error: `Cannot create conversation: User ${participantId} has blocked you` 
+      });
+    }
+
+    // Check if current user blocked participant
+    const userBlockedParticipant = await Block.findOne({
+      userId: userId,           // Current user blocked someone
+      blockedUserId: participantId // They blocked participant
+    });
+
+    if (userBlockedParticipant) {
+      return res.status(403).json({ 
+        error: `Cannot create conversation: You have blocked user ${participantId}` 
+      });
     }
 
     const conversation = await Conversation.create({
@@ -26,11 +53,11 @@ router.post("/", async (req, res) => {
 
     return res.status(201).json({ 
       conversationId: conversation._id,
-      conversation // TODO: res.Message und nur id zurückgeben
+      conversation 
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
