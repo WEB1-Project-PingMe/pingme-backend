@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get("/:userId", async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select("name email");
+    const user = await User.findById(req.params.userId).select("name");
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (error) {
