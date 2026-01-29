@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const BlockSchema = new mongoose.Schema(
+const BlockSchema = new Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     blockedUserId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     }, 
@@ -21,6 +22,4 @@ const BlockSchema = new mongoose.Schema(
 // same block only allowed once
 BlockSchema.index({ userId: 1, blockedUserId: 1 }, { unique: true });
 
-const Block = mongoose.model("Block", BlockSchema);
-
-module.exports = Block;
+module.exports = mongoose.model("Block", BlockSchema);
