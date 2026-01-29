@@ -8,6 +8,10 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
 app.use("/test", require("./routes/test"));
 
 
