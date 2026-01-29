@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const groupSchema = new Schema(
   {
     name: { type: String, required: true },
-    adminIds: [{ type: Schema.Types.ObjectId, ref: "User", index: true}],
+    adminIds: [{ type: Schema.Types.ObjectId, ref: "User"}],
     memberIds: [{ type: Schema.Types.ObjectId, ref: "User", index: true }],
     lastMessageAt: { type: Date, index: true },
     lastMessageText: { type: String },
@@ -14,7 +14,7 @@ const groupSchema = new Schema(
 );
 
 groupSchema.index({ memberIds: 1, lastMessageAt: -1 });
-groupSchema.index({ "adminIds": 1 });
+groupSchema.index({ adminIds: 1 });
 groupSchema.index({ isPrivate: 1, isActive: 1 });
 
 groupSchema.pre('save', async function() {
