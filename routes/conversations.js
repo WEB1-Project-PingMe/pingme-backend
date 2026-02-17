@@ -103,6 +103,18 @@ router.get("/", async (req, res) => {
       };
     });
 
+    await pusher.trigger(`conversation`, "new-conversation", {
+      message: {
+        _id: conv._id,
+        type: conv.type,
+        participants: otherParticipants,
+        lastMessageAt: conv.lastMessageAt,
+        lastMessageText: conv.lastMessageText,
+        updatedAt: conv.updatedAt,
+        createdAt: conv.createdAt
+      }
+    });
+
     res.json({
       success: true,
       conversations: formattedConversations
