@@ -20,7 +20,20 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "participantId required" });
     }
 
-    const participantIds = [userId, participantId];
+    const participantIds = [userId, participantId].sort();
+
+    const existingConversation = await Conversation.findOne({
+      participantIds: { $all: participantIds, $size: 2 }
+    });
+
+    if (existingConversation) {
+      await existingConversation.populate("participantIds", "name tag");
+      return res.status(200).json({ 
+        conversationId: existingConversation._id,
+        conversation: existingConversation,
+        message: "Conversation already exists"
+      });
+    }
 
     // Check if participant blocked current user
     const isBlockedByParticipant = await Block.findOne({
