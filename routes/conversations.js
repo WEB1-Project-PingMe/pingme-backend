@@ -2,6 +2,7 @@ const express = require("express");
 const Conversation = require("../db/models/conversations.model");
 const Message = require("../db/models/messages.model");
 const Block = require("../db/models/blocks.model");
+const pusher = require("../config/pusher");
 const router = express.Router();
 
 // GET /conversations list all chats of a user
@@ -167,6 +168,16 @@ router.post("/messages", async (req, res) => {
         lastMessageAt: message.createdAt,
         lastMessageText: message.text,
       },
+    });
+
+    await pusher.trigger(`conversation-${conversationId}`, "new-message", {
+      message: {
+        _id: message._id,
+        conversationId: message.conversationId,
+        senderId: message.senderId,
+        text: message.text,
+        createdAt: message.createdAt
+      }
     });
 
     return res.status(201).json({ message });
