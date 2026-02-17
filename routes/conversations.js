@@ -124,6 +124,60 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /conversations/:conversationId
+router.get("/:conversationId", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation
+      .findById(conversationId)
+      .populate("participantIds", "name tag")
+      .lean();
+
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Conversation not found"
+      });
+    }
+
+    if (!conversation.participantIds.some(p => p._id.toString() === userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to access this conversation"
+      });
+    }
+
+    const otherParticipants = conversation.participantIds.filter(p =>
+      p._id.toString() !== userId
+    );
+
+    const formattedConversation = {
+      _id: conversation._id,
+      type: conversation.type,
+      participants: otherParticipants,
+      lastMessageAt: conversation.lastMessageAt,
+      lastMessageText: conversation.lastMessageText,
+      updatedAt: conversation.updatedAt,
+      createdAt: conversation.createdAt
+    };
+
+    res.json({
+      success: true,
+      conversation: formattedConversation
+    });
+
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch conversation",
+      error: error.message
+    });
+  }
+});
+
 // GET /conversations/messages?conversationId=...&before=ISO&limit=20
 router.get("/messages", async (req, res) => {
   try {
