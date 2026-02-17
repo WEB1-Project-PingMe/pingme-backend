@@ -41,7 +41,7 @@ router.get("/:identifier", async (req, res) => {
 
 router.get("/search/:query", async (req, res) => {
   try {
-    const query = req.query.q?.trim();
+    const { query } = req.params;
 
     if (!query || query.length < 3) {
       return res.status(400).json({
