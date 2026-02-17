@@ -39,7 +39,7 @@ router.get("/:identifier", async (req, res) => {
   }
 });
 
-router.get("/search", async (req, res) => {
+router.get("/search/:query", async (req, res) => {
   try {
     const query = req.query.q?.trim();
 
