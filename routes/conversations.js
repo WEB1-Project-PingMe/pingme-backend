@@ -1,6 +1,7 @@
 const express = require("express");
 const Conversation = require("../db/models/conversations.model");
 const Message = require("../db/models/messages.model");
+const Block = require("../db/models/blocks.model");
 const router = express.Router();
 
 // GET /conversations list all chats of a user
