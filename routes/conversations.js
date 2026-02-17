@@ -66,6 +66,12 @@ router.post("/", async (req, res) => {
 
     await conversation.populate("participantIds", "name");
 
+    pusher.trigger(`conversation`, "new-conversation", {
+        message: {
+          conversationId: conversation._id
+        }
+      });
+
     return res.status(201).json({
       conversationId: conversation._id,
       conversation
@@ -91,19 +97,6 @@ router.get("/", async (req, res) => {
       const otherParticipants = conv.participantIds.filter(p =>
         p._id.toString() !== userId
       );
-
-      pusher.trigger(`conversation`, "new-conversation", {
-        message: {
-          _id: conv._id,
-          type: conv.type,
-          participants: otherParticipants,
-          lastMessageAt: conv.lastMessageAt,
-          lastMessageText: conv.lastMessageText,
-          updatedAt: conv.updatedAt,
-          createdAt: conv.createdAt
-        }
-      });
-
       // TODO: vielleicht doch beide returnen
       return {
         _id: conv._id,
