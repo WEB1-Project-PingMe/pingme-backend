@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
 
     if (existingConversation) {
       await existingConversation.populate("participantIds", "name tag");
-      return res.status(200).json({ 
+      return res.status(200).json({
         conversationId: existingConversation._id,
         conversation: existingConversation,
         message: "Conversation already exists"
@@ -38,13 +38,13 @@ router.post("/", async (req, res) => {
 
     // Check if participant blocked current user
     const isBlockedByParticipant = await Block.findOne({
-      userId: participantId,   
-      blockedUserId: userId     
+      userId: participantId,
+      blockedUserId: userId
     });
 
     if (isBlockedByParticipant) {
-      return res.status(403).json({ 
-        error: `Cannot create conversation: User ${participantId} has blocked you` 
+      return res.status(403).json({
+        error: `Cannot create conversation: User ${participantId} has blocked you`
       });
     }
 
@@ -55,8 +55,8 @@ router.post("/", async (req, res) => {
     });
 
     if (userBlockedParticipant) {
-      return res.status(403).json({ 
-        error: `Cannot create conversation: You have blocked user ${participantId}` 
+      return res.status(403).json({
+        error: `Cannot create conversation: You have blocked user ${participantId}`
       });
     }
 
@@ -66,9 +66,9 @@ router.post("/", async (req, res) => {
 
     await conversation.populate("participantIds", "name");
 
-    return res.status(201).json({ 
+    return res.status(201).json({
       conversationId: conversation._id,
-      conversation 
+      conversation
     });
   } catch (err) {
     console.error(err);
@@ -88,9 +88,22 @@ router.get("/", async (req, res) => {
 
     // Transform data to group participants and identify other participant
     const formattedConversations = conversations.map(conv => {
-      const otherParticipants = conv.participantIds.filter(p => 
+      const otherParticipants = conv.participantIds.filter(p =>
         p._id.toString() !== userId
       );
+
+      pusher.trigger(`conversation`, "new-conversation", {
+        message: {
+          _id: conv._id,
+          type: conv.type,
+          participants: otherParticipants,
+          lastMessageAt: conv.lastMessageAt,
+          lastMessageText: conv.lastMessageText,
+          updatedAt: conv.updatedAt,
+          createdAt: conv.createdAt
+        }
+      });
+
       // TODO: vielleicht doch beide returnen
       return {
         _id: conv._id,
@@ -101,18 +114,6 @@ router.get("/", async (req, res) => {
         updatedAt: conv.updatedAt,
         createdAt: conv.createdAt
       };
-    });
-
-    await pusher.trigger(`conversation`, "new-conversation", {
-      message: {
-        _id: conv._id,
-        type: conv.type,
-        participants: otherParticipants,
-        lastMessageAt: conv.lastMessageAt,
-        lastMessageText: conv.lastMessageText,
-        updatedAt: conv.updatedAt,
-        createdAt: conv.createdAt
-      }
     });
 
     res.json({
@@ -139,7 +140,7 @@ router.get("/messages", async (req, res) => {
       return res.status(400).json({ error: "conversationId is required" });
     }
 
-    const query = { 
+    const query = {
       conversationId,
       deletedAt: null  // Filter out deleted messages
     };
@@ -210,11 +211,11 @@ router.delete("/messages", async (req, res) => {
     }
 
     // Verify message exists, belongs to conversation, owned by user, not deleted
-    const message = await Message.findOne({ 
-      _id: messageId, 
+    const message = await Message.findOne({
+      _id: messageId,
       conversationId,
       senderId: userId,
-      deletedAt: null 
+      deletedAt: null
     });
 
     if (!message) {
@@ -227,9 +228,9 @@ router.delete("/messages", async (req, res) => {
       { deletedAt: new Date() }
     );
 
-    res.json({ 
-      success: true, 
-      message: "Message deleted successfully" 
+    res.json({
+      success: true,
+      message: "Message deleted successfully"
     });
 
   } catch (err) {
