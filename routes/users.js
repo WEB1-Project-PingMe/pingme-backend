@@ -8,11 +8,31 @@ const router = express.Router();
 // GET /users/settings show user settings
 // PATCH /users/settings update user settings
 
-router.get("/:userId", async (req, res) => {
+router.get("/:identifier", async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).select("name");
+    const { identifier } = req.params;
+
+    let user;
+
+    const isUserId = /^[0-9a-fA-F]{24}$/.test(identifier);
+    if (isUserId) {
+      user = await User.findById(identifier).select("name");
+    } else {
+      user = await User.findOne({ tag: identifier });
+    }
+
     if (!user) return res.status(404).json({ error: "User not found" });
-    res.json(user);
+    
+    const userResponse = {
+      name: user.name,
+      tag: user.tag,
+      userId: user._id.toString()
+    };
+
+    res.status(200).json({
+      user: userResponse
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
