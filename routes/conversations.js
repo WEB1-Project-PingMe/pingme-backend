@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
 
     const conversations = await Conversation
       .find({ participantIds: userId })
-      .populate("participantIds", "name", "userTag")
+      .populate("participantIds", "name tag")
       .sort({ lastMessageAt: -1 })
       .lean();
 
