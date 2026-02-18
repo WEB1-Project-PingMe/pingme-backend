@@ -1,16 +1,15 @@
 const express = require("express");
 const { Ratelimit } = require("@upstash/ratelimit");
-const redis = require("redis");
+const { Redis } = require("@upstash/redis");
 
 const router = express.Router();
 
-const client = redis.createClient({ 
-  url: process.env.REDIS_URL 
+const redis = new Redis({
+  url: process.env.REDIS_URL
 });
-client.connect();
 
 const currentLimit = new Ratelimit({
-  redis: client,
+  redis: redis,
   limiter: Ratelimit.slidingWindow(6, "1 h"),
   prefix: "@upstash/ratelimit/weather"
 });
