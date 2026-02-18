@@ -4,14 +4,13 @@ const { Redis } = require("@upstash/redis");
 
 const router = express.Router();
 
-const redis = new Redis({
-  url: process.env.REDIS_URL
-});
+const redis = Redis.fromEnv();
 
+// Current: 6/hour (1 every 10min)
 const currentLimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(6, "1 h"),
-  prefix: "@upstash/ratelimit/weather"
+  limiter: Ratelimit.slidingWindow(6, '1 h'),
+  prefix: '@upstash/ratelimit/weather'
 });
 
 // Forecast rate limit middleware (1 per day)
