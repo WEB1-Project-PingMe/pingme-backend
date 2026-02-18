@@ -1,14 +1,16 @@
 const express = require("express");
 const { Ratelimit } = require("@upstash/ratelimit");
-const { Redis } = require("@upstash/redis");
+const redis = require("redis");
 
 const router = express.Router();
 
-const redis = Redis.fromEnv();
+const client = redis.createClient({ 
+  url: process.env.REDIS_URL 
+});
+client.connect();
 
-// Current: 6/hour (1 every 10min)
 const currentLimit = new Ratelimit({
-  redis: redis,
+  redis: client,
   limiter: Ratelimit.slidingWindow(6, "1 h"),
   prefix: "@upstash/ratelimit/weather"
 });
@@ -33,6 +35,7 @@ const validateForecastRateLimit = async (req, res, next) => {
   next();
 };
 
+// Current weather rate limit middleware (1 every 10min)
 const validateCurrentRateLimit = async (req, res, next) => {
   const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "User ID required" });
