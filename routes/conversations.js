@@ -124,8 +124,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /conversations/:conversationId
-router.get("/:conversationId", async (req, res) => {
+// GET /conversations/conversation/:conversationId
+router.get("/conversation/:conversationId", async (req, res) => {
   try {
     const userId = req.user.userId;
     const { conversationId } = req.params;
