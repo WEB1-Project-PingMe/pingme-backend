@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 
 
 
-router.get("/", verifyToken, (req, res) => {
+router.get("/user", verifyToken, (req, res) => {
   res.json({ 
     message: "Test Current User?", 
     currentUser: req.user,
