@@ -22,6 +22,7 @@ app.use("/users", verifyToken, require("./routes/users"));
 //app.use("/messages", verifyToken, require("./routes/messages")); // testing
 app.use("/conversations", verifyToken, require("./routes/conversations"));
 app.use("/groups", verifyToken, require("./routes/groups"));
+app.use("/weather", verifyToken, require("./routes/weather"));
 //app.use("/", require("./routes/"));
 
 module.exports = app;
