@@ -268,19 +268,33 @@ router.post("/:groupID/messages", async (req, res) => {
   }
 });
 
-// GET /groups/:groupID/messages
+// GET /groups/:groupID/messages?limit=50&before=messageId
 router.get("/:groupID/messages", async (req, res) => {
   try {
     const { groupID } = req.params;
-    const messages = await Message.find({ groupId: groupID })
-      .sort({ createdAt: 1 })
+    const { limit = 50, before } = req.query;
+
+    const query = { groupId: groupID };
+    
+    // Filter messages before the specified message ID for pagination
+    if (before) {
+      query._id = { $lt: before };
+    }
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
       .lean();
+
+    // Reverse for ascending chronological order (oldest first)
+    messages.reverse();
 
     res.json(messages);
   } catch (err) {
     handleError(res, err, 500);
   }
 });
+
 
 // DELETE /groups/:groupID/messages
 router.delete("/:groupID/messages", async (req, res) => {
