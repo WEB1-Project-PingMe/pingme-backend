@@ -96,6 +96,15 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.get("/login", verifyToken, (req, res) => {
+  res.json({ 
+    loggedIn: true,
+    user: req.user,
+    timestamp: new Date().toISOString(),
+    status: "success"
+  });
+});
+
 // Logout User Delete sessionToken
 
 
