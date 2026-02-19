@@ -38,7 +38,10 @@ router.post("/", async (req, res) => {
 // GET /groups
 router.get("/", async (req, res) => {
   try {
-    const groups = await Group.find().lean();
+    const userId = req.user.userId;
+    const groups = await Group.find({ 
+      memberIds: userId 
+    }).lean();
     res.json(groups);
   } catch (err) {
     handleError(res, err, 500);
