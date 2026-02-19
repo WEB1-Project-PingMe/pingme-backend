@@ -30,7 +30,7 @@ const validateNewsRateLimit = async (req, res, next) => {
 };
 
 // News endpoint
-router.get("/news", validateNewsRateLimit, async (req, res) => {
+router.get("/headlines", validateNewsRateLimit, async (req, res) => {
   try {
     const { q, country = "us", category, pageSize = 10 } = req.query;
     const apiKey = process.env.NEWS_API;
