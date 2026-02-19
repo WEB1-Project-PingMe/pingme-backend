@@ -66,11 +66,12 @@ router.post("/", async (req, res) => {
 
     await conversation.populate("participantIds", "name");
 
-    pusher.trigger(`conversation`, "new-conversation", {
-        message: {
-          conversationId: conversation._id
-        }
-      });
+    pusher.trigger(`chat`, "new-chat", {
+      message: {
+        chatId: conversation._id,
+        type: "conversation"
+      }
+    });
 
     return res.status(201).json({
       conversationId: conversation._id,
@@ -230,10 +231,10 @@ router.post("/messages", async (req, res) => {
       },
     });
 
-    await pusher.trigger(`conversation-${conversationId}`, "new-message", {
+    await pusher.trigger(`chat-${conversationId}`, "new-message", {
       message: {
         _id: message._id,
-        conversationId: message.conversationId,
+        chatId: message.conversationId,
         senderId: message.senderId,
         text: message.text,
         createdAt: message.createdAt

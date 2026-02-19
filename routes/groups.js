@@ -2,6 +2,7 @@ const express = require("express");
 const Message = require("../db/models/messages.model");
 const Announcement = require("../db/models/announcements.model")
 const Group = require("../db/models/groups.model");
+const pusher = require("../config/pusher");
 const router = express.Router({ mergeParams: true });
 
 const handleError = (res, err, status = 400) => {
@@ -20,6 +21,13 @@ router.post("/", async (req, res) => {
       memberIds,
     });
 
+    pusher.trigger(`chat`, "new-chat", {
+      message: {
+        chatId: group._id,
+        type: "group"
+      }
+    });
+
     await group.save();
     res.status(201).json(group);
   } catch (err) {
@@ -36,6 +44,24 @@ router.get("/", async (req, res) => {
     handleError(res, err, 500);
   }
 });
+
+// GET /groups/:groupId
+router.get("/:groupId", async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    const group = await Group.findById(groupId).lean();
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    res.json(group);
+  } catch (err) {
+    handleError(res, err, 500);
+  }
+});
+
 
 // PATCH /groups/:groupID
 router.patch("/:groupID", async (req, res) => {
@@ -250,19 +276,29 @@ router.post("/:groupID/messages", async (req, res) => {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    const msg = await Message.create({
+    const message = await Message.create({
       groupId: groupID,
       senderId,
       text,
     });
 
     // Group-LastMessage aktualisieren
-    group.lastMessageAt = msg.createdAt;
-    group.lastMessageText = msg.text;
+    group.lastMessageAt = message.createdAt;
+    group.lastMessageText = message.text;
     group.lastMessageSender = senderId;
     await group.save();
 
-    res.status(201).json(msg);
+    await pusher.trigger(`chat-${groupId}`, "new-message", {
+      message: {
+        _id: message._id,
+        chatId: message.groupId,
+        senderId: message.senderId,
+        text: message.text,
+        createdAt: message.createdAt
+      }
+    });
+
+    res.status(201).json(message);
   } catch (err) {
     handleError(res, err);
   }
@@ -275,7 +311,7 @@ router.get("/:groupID/messages", async (req, res) => {
     const { limit = 50, before } = req.query;
 
     const query = { groupId: groupID };
-    
+
     // Filter messages before the specified message ID for pagination
     if (before) {
       query._id = { $lt: before };
