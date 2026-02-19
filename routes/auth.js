@@ -96,17 +96,17 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// router.get("/login", verifyToken, (req, res) => {
-//   res.json({ 
-//     loggedIn: true,
-//     user: req.user,
-//     timestamp: new Date().toISOString(),
-//     status: "success"
-//   });
-// });
+router.get("/login", verifyToken, (req, res) => {
+  res.json({ 
+    loggedIn: true,
+    user: req.user,
+    timestamp: new Date().toISOString(),
+    status: "success"
+  });
+});
 
-// GET /login - Get User Profile
-router.get("/login", verifyToken, async (req, res) => {
+// GET /account - Get User Profile
+router.get("/account", verifyToken, async (req, res) => {
   try {
     const sessionToken = req.headers.authorization?.replace("Bearer ", "");
     
