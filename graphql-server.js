@@ -9,16 +9,52 @@ const path = require('path');
 const schemaFiles = loadFilesSync(path.join(__dirname, '../pingme-graphql/schema/*.graphql'));
 const typeDefs = schemaFiles.join('\n');
 
-// Beispiel-Resolver (hier musst du deine Logik einbauen)
+// Echte Resolver mit Backend-Logik
+const mongoose = require('./db/db-connector');
+const User = require('./db/models/users.model');
+
 const resolvers = {
   Query: {
-    users: () => [{ id: '1', username: 'Robin', email: 'robin@example.com', createdAt: '2026-02-20' }],
-    user: (_, { id }) => ({ id, username: 'Robin', email: 'robin@example.com', createdAt: '2026-02-20' }),
+    users: async () => {
+      const users = await User.find().select('name tag email createdAt');
+      return users.map(user => ({
+        id: user._id.toString(),
+        username: user.name,
+        email: user.email,
+        createdAt: user.createdAt.toISOString()
+      }));
+    },
+    user: async (_, { id }) => {
+      const user = await User.findById(id).select('name tag email createdAt');
+      if (!user) return null;
+      return {
+        id: user._id.toString(),
+        username: user.name,
+        email: user.email,
+        createdAt: user.createdAt.toISOString()
+      };
+    },
     // ...weitere Query-Resolver
   },
   Mutation: {
-    updateUser: (_, { id, username, email, password }) => ({ id, username, email, createdAt: '2026-02-20' }),
-    deleteUser: (_, { id }) => true,
+    updateUser: async (_, { id, username, email, password }) => {
+      const update = {};
+      if (username) update.name = username;
+      if (email) update.email = email;
+      if (password) update.password = password; // Achtung: Passwort-Hashing fehlt hier noch!
+      const user = await User.findByIdAndUpdate(id, update, { new: true });
+      if (!user) throw new Error('User not found');
+      return {
+        id: user._id.toString(),
+        username: user.name,
+        email: user.email,
+        createdAt: user.createdAt.toISOString()
+      };
+    },
+    deleteUser: async (_, { id }) => {
+      const res = await User.findByIdAndDelete(id);
+      return !!res;
+    },
     // ...weitere Mutation-Resolver
   }
 };
