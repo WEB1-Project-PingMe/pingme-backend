@@ -19,7 +19,7 @@ const validateNewsRateLimit = async (req, res, next) => {
   if (!userId) return res.status(401).json({ error: "User ID required" });
 
   const { success } = await newsLimit.limit(`news:${userId}`);
-  
+
   if (!success) {
     return res.status(429).json({
       error: "News: 1 request every 30 seconds",
@@ -34,7 +34,7 @@ router.get("/everything", validateNewsRateLimit, async (req, res) => {
   try {
     const { q, sortBy = "publishedAt", pageSize = 20, page = 1 } = req.query;
     const apiKey = process.env.NEWS_API;
-    
+
     if (!apiKey) {
       return res.status(500).json({ error: "NewsAPI key not configured" });
     }
@@ -43,11 +43,21 @@ router.get("/everything", validateNewsRateLimit, async (req, res) => {
       return res.status(400).json({ error: "Query parameter 'q' is required" });
     }
 
+    const now = new Date();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(now.getDate() - 3);
+
+    const to = now.toISOString();              
+    const from = threeDaysAgo.toISOString();
+
     const params = new URLSearchParams({
       q,
       sortBy,
       pageSize: Math.min(pageSize, 100).toString(),
       page: page.toString(),
+      language: "en",
+      from,
+      to,
       apiKey
     });
 
@@ -57,9 +67,9 @@ router.get("/everything", validateNewsRateLimit, async (req, res) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return res.status(response.status).json({ 
-        error: "NewsAPI error", 
-        message: errorData.message || `HTTP ${response.status}` 
+      return res.status(response.status).json({
+        error: "NewsAPI error",
+        message: errorData.message || `HTTP ${response.status}`
       });
     }
 
