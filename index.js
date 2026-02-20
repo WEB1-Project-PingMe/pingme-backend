@@ -14,15 +14,14 @@ app.get("/favicon.ico", (req, res) => {
 
 app.use("/test", require("./routes/test"));
 
-
 app.use("/auth", require("./routes/auth"));
 app.use("/users", verifyToken, require("./routes/users"));
 //app.use("/contacts", verifyToken, require("./routes/contacts"));
 //app.use("/blocks", verifyToken, require("./routes/blocks"));
-//app.use("/messages", verifyToken, require("./routes/messages")); // testing
 app.use("/conversations", verifyToken, require("./routes/conversations"));
 app.use("/groups", verifyToken, require("./routes/groups"));
 app.use("/weather", verifyToken, require("./routes/weather"));
+app.use("/news", verifyToken, require("./routes/news"));
 //app.use("/", require("./routes/"));
 
 module.exports = app;

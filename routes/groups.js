@@ -2,6 +2,7 @@ const express = require("express");
 const Message = require("../db/models/messages.model");
 const Announcement = require("../db/models/announcements.model")
 const Group = require("../db/models/groups.model");
+const pusher = require("../config/pusher");
 const router = express.Router({ mergeParams: true });
 
 const handleError = (res, err, status = 400) => {
@@ -20,6 +21,13 @@ router.post("/", async (req, res) => {
       memberIds,
     });
 
+    pusher.trigger(`chat`, "new-chat", {
+      message: {
+        chatId: group._id,
+        type: "group"
+      }
+    });
+
     await group.save();
     res.status(201).json(group);
   } catch (err) {
@@ -30,20 +38,41 @@ router.post("/", async (req, res) => {
 // GET /groups
 router.get("/", async (req, res) => {
   try {
-    const groups = await Group.find().lean();
+    const userId = req.user.userId;
+    const groups = await Group.find({ 
+      memberIds: userId 
+    }).lean();
     res.json(groups);
   } catch (err) {
     handleError(res, err, 500);
   }
 });
 
-// PATCH /groups/:groupID
-router.patch("/:groupID", async (req, res) => {
+// GET /groups/:groupId
+router.get("/:groupId", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
+
+    const group = await Group.findById(groupId).lean();
+
+    if (!group) {
+      return res.status(404).json({ error: "Group not found" });
+    }
+
+    res.json(group);
+  } catch (err) {
+    handleError(res, err, 500);
+  }
+});
+
+
+// PATCH /groups/:groupId
+router.patch("/:groupId", async (req, res) => {
+  try {
+    const { groupId } = req.params;
 
     const group = await Group.findByIdAndUpdate(
-      groupID,
+      groupId,
       { $set: req.body },
       { new: true, runValidators: true }
     );
@@ -58,11 +87,11 @@ router.patch("/:groupID", async (req, res) => {
   }
 });
 
-// DELETE /groups/:groupID
-router.delete("/:groupID", async (req, res) => {
+// DELETE /groups/:groupId
+router.delete("/:groupId", async (req, res) => {
   try {
-    const { groupID } = req.params;
-    const group = await Group.findByIdAndDelete(groupID);
+    const { groupId } = req.params;
+    const group = await Group.findByIdAndDelete(groupId);
 
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
@@ -74,18 +103,18 @@ router.delete("/:groupID", async (req, res) => {
   }
 });
 
-// POST /groups/:groupID/members
+// POST /groups/:groupId/members
 // Body: { userId: "<UserId>" }
-router.post("/:groupID/members", async (req, res) => {
+router.post("/:groupId/members", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
     const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "userId required" });
     }
 
-    const group = await Group.findById(groupID);
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
@@ -101,12 +130,12 @@ router.post("/:groupID/members", async (req, res) => {
   }
 });
 
-// GET /groups/:groupID/members
-router.get("/:groupID/members", async (req, res) => {
+// GET /groups/:groupId/members
+router.get("/:groupId/members", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
 
-    const group = await Group.findById(groupID)
+    const group = await Group.findById(groupId)
       .populate("memberIds", "_id name")
       .populate("adminIds", "_id name");
 
@@ -123,18 +152,18 @@ router.get("/:groupID/members", async (req, res) => {
   }
 });
 
-// DELETE /groups/:groupID/members
+// DELETE /groups/:groupId/members
 // Body: { userId: "<UserId>" }
-router.delete("/:groupID/members", async (req, res) => {
+router.delete("/:groupId/members", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
     const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "userId required" });
     }
 
-    const group = await Group.findById(groupID);
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
@@ -162,12 +191,12 @@ router.delete("/:groupID/members", async (req, res) => {
   }
 });
 
-// GET /groups/:groupID/roles
-router.get("/:groupID/roles", async (req, res) => {
+// GET /groups/:groupId/roles
+router.get("/:groupId/roles", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
 
-    const group = await Group.findById(groupID)
+    const group = await Group.findById(groupId)
       .populate("memberIds", "_id name")
       .populate("adminIds", "_id name");
 
@@ -191,18 +220,18 @@ router.get("/:groupID/roles", async (req, res) => {
   }
 });
 
-// PATCH /groups/:groupID/members/:userID/role
+// PATCH /groups/:groupId/members/:userID/role
 // Body: { role: "admin" | "member" }
-router.patch("/:groupID/members/:userID/role", async (req, res) => {
+router.patch("/:groupId/members/:userID/role", async (req, res) => {
   try {
-    const { groupID, userID } = req.params;
+    const { groupId, userID } = req.params;
     const { role } = req.body;
 
     if (!["admin", "member"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }
 
-    const group = await Group.findById(groupID);
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
@@ -238,44 +267,54 @@ router.patch("/:groupID/members/:userID/role", async (req, res) => {
   }
 });
 
-// POST /groups/:groupID/messages
+// POST /groups/:groupId/messages
 // Body: { senderId, text }
-router.post("/:groupID/messages", async (req, res) => {
+router.post("/:groupId/messages", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
     const { senderId, text } = req.body;
 
-    const group = await Group.findById(groupID);
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
-    const msg = await Message.create({
-      groupId: groupID,
+    const message = await Message.create({
+      groupId: groupId,
       senderId,
       text,
     });
 
     // Group-LastMessage aktualisieren
-    group.lastMessageAt = msg.createdAt;
-    group.lastMessageText = msg.text;
+    group.lastMessageAt = message.createdAt;
+    group.lastMessageText = message.text;
     group.lastMessageSender = senderId;
     await group.save();
 
-    res.status(201).json(msg);
+    await pusher.trigger(`chat-${groupId}`, "new-message", {
+      message: {
+        _id: message._id,
+        chatId: message.groupId,
+        senderId: message.senderId,
+        text: message.text,
+        createdAt: message.createdAt
+      }
+    });
+
+    res.status(201).json(message);
   } catch (err) {
     handleError(res, err);
   }
 });
 
-// GET /groups/:groupID/messages?limit=50&before=messageId
-router.get("/:groupID/messages", async (req, res) => {
+// GET /groups/:groupId/messages?limit=50&before=messageId
+router.get("/:groupId/messages", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
     const { limit = 50, before } = req.query;
 
-    const query = { groupId: groupID };
-    
+    const query = { groupId: groupId };
+
     // Filter messages before the specified message ID for pagination
     if (before) {
       query._id = { $lt: before };
@@ -296,15 +335,15 @@ router.get("/:groupID/messages", async (req, res) => {
 });
 
 
-// DELETE /groups/:groupID/messages
-router.delete("/:groupID/messages", async (req, res) => {
+// DELETE /groups/:groupId/messages
+router.delete("/:groupId/messages", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
 
-    await Message.deleteMany({ groupId: groupID });
+    await Message.deleteMany({ groupId: groupId });
 
     // lastMessage* in Group zurücksetzen
-    await Group.findByIdAndUpdate(groupID, {
+    await Group.findByIdAndUpdate(groupId, {
       $set: { lastMessageAt: null, lastMessageText: null, lastMessageSender: null },
     });
 
@@ -314,14 +353,14 @@ router.delete("/:groupID/messages", async (req, res) => {
   }
 });
 
-// DELETE /groups/:groupID/messages/:messageID
-router.delete("/:groupID/messages/:messageID", async (req, res) => {
+// DELETE /groups/:groupId/messages/:messageID
+router.delete("/:groupId/messages/:messageID", async (req, res) => {
   try {
-    const { groupID, messageID } = req.params;
+    const { groupId, messageID } = req.params;
 
     const msg = await Message.findOneAndDelete({
       _id: messageID,
-      groupId: groupID,
+      groupId: groupId,
     });
 
     if (!msg) {
@@ -329,16 +368,16 @@ router.delete("/:groupID/messages/:messageID", async (req, res) => {
     }
 
     // lastMessage neu berechnen
-    const last = await Message.find({ groupId: groupID })
+    const last = await Message.find({ groupId: groupId })
       .sort({ createdAt: -1 })
       .limit(1);
 
     if (!last.length) {
-      await Group.findByIdAndUpdate(groupID, {
+      await Group.findByIdAndUpdate(groupId, {
         $set: { lastMessageAt: null, lastMessageText: null, lastMessageSender: null },
       });
     } else {
-      await Group.findByIdAndUpdate(groupID, {
+      await Group.findByIdAndUpdate(groupId, {
         $set: {
           lastMessageAt: last[0].createdAt,
           lastMessageText: last[0].text,
@@ -353,20 +392,20 @@ router.delete("/:groupID/messages/:messageID", async (req, res) => {
   }
 });
 
-// POST /groups/:groupID/announcements
+// POST /groups/:groupId/announcements
 // Body: { creatorId, title, text }
-router.post("/:groupID/announcements", async (req, res) => {
+router.post("/:groupId/announcements", async (req, res) => {
   try {
-    const { groupID } = req.params;
+    const { groupId } = req.params;
     const { creatorId, title, text } = req.body;
 
-    const group = await Group.findById(groupID);
+    const group = await Group.findById(groupId);
     if (!group) {
       return res.status(404).json({ error: "Group not found" });
     }
 
     const ann = await Announcement.create({
-      groupId: groupID,
+      groupId: groupId,
       creatorId,
       title,
       text,
@@ -378,11 +417,11 @@ router.post("/:groupID/announcements", async (req, res) => {
   }
 });
 
-// GET /groups/:groupID/announcements
-router.get("/:groupID/announcements", async (req, res) => {
+// GET /groups/:groupId/announcements
+router.get("/:groupId/announcements", async (req, res) => {
   try {
-    const { groupID } = req.params;
-    const anns = await Announcement.find({ groupId: groupID })
+    const { groupId } = req.params;
+    const anns = await Announcement.find({ groupId: groupId })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -392,15 +431,15 @@ router.get("/:groupID/announcements", async (req, res) => {
   }
 });
 
-// PATCH /groups/:groupID/announcements/:announcementID
+// PATCH /groups/:groupId/announcements/:announcementID
 // Body: { title?, text? }
-router.patch("/:groupID/announcements/:announcementID",
+router.patch("/:groupId/announcements/:announcementID",
   async (req, res) => {
     try {
-      const { groupID, announcementID } = req.params;
+      const { groupId, announcementID } = req.params;
 
       const ann = await Announcement.findOneAndUpdate(
-        { _id: announcementID, groupId: groupID },
+        { _id: announcementID, groupId: groupId },
         { $set: req.body },
         { new: true, runValidators: true }
       );
@@ -416,16 +455,16 @@ router.patch("/:groupID/announcements/:announcementID",
   }
 );
 
-// DELETE /groups/:groupID/announcements/:announcementID
+// DELETE /groups/:groupId/announcements/:announcementID
 router.delete(
-  "/:groupID/announcements/:announcementID",
+  "/:groupId/announcements/:announcementID",
   async (req, res) => {
     try {
-      const { groupID, announcementID } = req.params;
+      const { groupId, announcementID } = req.params;
 
       const ann = await Announcement.findOneAndDelete({
         _id: announcementID,
-        groupId: groupID,
+        groupId: groupId,
       });
 
       if (!ann) {

@@ -105,6 +105,38 @@ router.get("/login", verifyToken, (req, res) => {
   });
 });
 
+// GET /account - Get User Profile
+router.get("/account", verifyToken, async (req, res) => {
+  try {
+    const sessionToken = req.headers.authorization?.replace("Bearer ", "");
+    
+    if (!sessionToken) {
+      return res.status(401).json({ error: "Session token required" });
+    }
+
+    const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.userId).select("name tag email");
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      name: user.name,
+      tag: user.tag,
+      email: user.email
+    });
+
+  } catch (error) {
+    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Invalid or expired token" });
+    }
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Logout User Delete sessionToken
 
 

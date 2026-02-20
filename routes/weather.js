@@ -6,34 +6,37 @@ const router = express.Router();
 
 const redis = Redis.fromEnv();
 
-// Current: 6/hour (1 every 10min)
+// Current weather: 1 every 30 seconds
 const currentLimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(6, '1 h'),
-  prefix: '@upstash/ratelimit/weather'
+  limiter: Ratelimit.slidingWindow(1, '30 s'),
+  prefix: '@upstash/ratelimit/weather:current'
 });
 
-// Forecast rate limit middleware (1 per day)
+// Forecast: 1 every 30 seconds  
+const forecastLimit = new Ratelimit({
+  redis: redis,
+  limiter: Ratelimit.slidingWindow(1, '30 s'),
+  prefix: '@upstash/ratelimit/weather:forecast'
+});
+
+// Forecast rate limit middleware (1 every 30 seconds)
 const validateForecastRateLimit = async (req, res, next) => {
   const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "User ID required" });
 
-  const today = new Date().toISOString().slice(0, 10);
-  const { success } = await currentLimit.limit(`forecast:${userId}:${today}`);
+  const { success } = await forecastLimit.limit(`forecast:${userId}`);
   
   if (!success) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
     return res.status(429).json({
-      error: "Forecast: 1 request per day (resets midnight)",
-      reset: Math.floor((tomorrow - new Date()) / 1000)
+      error: "Forecast: 1 request every 30 seconds",
+      reset: Math.floor(forecastLimit.limitMs / 1000)
     });
   }
   next();
 };
 
-// Current weather rate limit middleware (1 every 10min)
+// Current weather rate limit middleware (1 every 30 seconds)
 const validateCurrentRateLimit = async (req, res, next) => {
   const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "User ID required" });
@@ -42,7 +45,7 @@ const validateCurrentRateLimit = async (req, res, next) => {
   
   if (!success) {
     return res.status(429).json({
-      error: "Current weather: 1 request every 10 minutes",
+      error: "Current weather: 1 request every 30 seconds",
       reset: Math.floor(currentLimit.limitMs / 1000)
     });
   }
